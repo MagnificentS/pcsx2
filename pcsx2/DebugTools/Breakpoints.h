@@ -151,11 +151,7 @@ public:
 
 	static void Update(BreakPointCpu cpu = BREAKPOINT_IOP_AND_EE, u32 addr = 0);
 
-	static void SetBreakpointTriggered(bool triggered, BreakPointCpu cpu = BreakPointCpu::BREAKPOINT_IOP_AND_EE)
-	{
-		breakpointTriggered_ = triggered;
-		breakpointTriggeredCpu_ = cpu;
-	};
+        static void SetBreakpointTriggered(bool triggered, BreakPointCpu cpu = BreakPointCpu::BREAKPOINT_IOP_AND_EE);
 	static bool GetBreakpointTriggered() { return breakpointTriggered_; };
 	static BreakPointCpu GetBreakpointTriggeredCpu() { return breakpointTriggeredCpu_; };
 
