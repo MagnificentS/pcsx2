@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0+
 
 #include "Breakpoints.h"
+#include "MemoryScanner.h"
+#include "InstructionTracer.h"
 #include "SymbolGuardian.h"
 #include "MIPSAnalyst.h"
 #include <cstdio>
@@ -18,6 +20,31 @@ std::vector<MemCheck*> CBreakPoints::cleanupMemChecks_;
 bool CBreakPoints::breakpointTriggered_ = false;
 BreakPointCpu CBreakPoints::breakpointTriggeredCpu_;
 bool CBreakPoints::corePaused = false;
+
+namespace
+{
+	InstructionTracer::TraceEvent BuildTraceEvent(BreakPointCpu cpu)
+	{
+		DebugInterface& iface = DebugInterface::get(cpu);
+
+		InstructionTracer::TraceEvent event;
+		event.cpu = cpu;
+		event.pc = iface.getPC();
+		event.opcode = iface.read32(event.pc);
+		event.disasm = iface.disasm(event.pc, true);
+		event.cycles = iface.getCycles();
+		event.timestamp_ns = InstructionTracer::MonotonicTimestamp();
+		return event;
+	}
+
+	void RecordTraceEvent(BreakPointCpu cpu)
+	{
+		if (!InstructionTracer::IsEnabled(cpu))
+			return;
+
+		InstructionTracer::Record(cpu, BuildTraceEvent(cpu));
+	}
+}
 
 // called from the dynarec
 u32 standardizeBreakpointAddress(u32 addr)
@@ -51,6 +78,7 @@ MemCheck::MemCheck()
 
 void MemCheck::Log(u32 addr, bool write, int size, u32 pc)
 {
+        MemoryScannerHooks::OnMemCheckHit(*this, addr, write, size, pc);
 }
 
 void MemCheck::Action(u32 addr, bool write, int size, u32 pc)
@@ -417,6 +445,15 @@ void CBreakPoints::ClearSkipFirst()
 	breakSkipFirstTicksEE_ = 0;
 	breakSkipFirstAtIop_ = 0;
 	breakSkipFirstTicksIop_ = 0;
+}
+
+void CBreakPoints::SetBreakpointTriggered(bool triggered, BreakPointCpu cpu)
+{
+	breakpointTriggered_ = triggered;
+	breakpointTriggeredCpu_ = cpu;
+
+	if (triggered)
+		RecordTraceEvent(cpu);
 }
 
 const std::vector<MemCheck> CBreakPoints::GetMemCheckRanges()
