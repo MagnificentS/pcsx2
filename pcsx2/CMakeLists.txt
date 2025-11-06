@@ -803,6 +803,7 @@ set(pcsx2DebugToolsSources
 	DebugTools/DisVU1Micro.cpp
 	DebugTools/BiosDebugData.cpp
 	DebugTools/MemoryScanner.cpp
+	DebugTools/MipsDecoder.cpp
 	DebugTools/Subsystems.cpp)
 
 # DebugTools headers
@@ -826,6 +827,7 @@ set(pcsx2DebugToolsHeaders
 	DebugTools/DisVUops.h
 	DebugTools/BiosDebugData.h
 	DebugTools/MemoryScanner.h
+	DebugTools/MipsDecoder.h
 	DebugTools/Subsystems.h)
 
 set(pcsx2HostSources

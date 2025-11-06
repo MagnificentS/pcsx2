@@ -24,6 +24,7 @@
 // Only for MOVQ workaround.
 #include "common/emitter/internal.h"
 #include "DebugTools/InstructionTracer.h"
+#include "DebugTools/MipsDecoder.h"
 #include "DebugTools/Subsystems.h"
 #include "R5900.h"
 #include <chrono>
@@ -1540,6 +1541,24 @@ void dynarecCheckBreakpoint()
 		ev.disasm = disasm_str;
 		ev.cycles = cpuRegs.cycle;
 		ev.timestamp_ns = std::chrono::steady_clock::now().time_since_epoch().count();
+
+		// Decode instruction to populate memory access information
+		std::vector<MipsDecoder::MemoryAccess> mem_ops = MipsDecoder::DecodeMemoryOperations(
+			opcode,
+			pc,
+			reinterpret_cast<const u64*>(&cpuRegs.GPR.r)
+		);
+
+		// Populate TraceEvent memory access vectors
+		ev.mem_r.clear();
+		ev.mem_w.clear();
+		for (const auto& op : mem_ops)
+		{
+			if (op.is_write)
+				ev.mem_w.push_back({op.address, op.size});
+			else
+				ev.mem_r.push_back({op.address, op.size});
+		}
 
 		// Detect subsystem context from instruction and memory accesses
 		ev.subsystem = static_cast<u8>(Subsystem::Type::None);
