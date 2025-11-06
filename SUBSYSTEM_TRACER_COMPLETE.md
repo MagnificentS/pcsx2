@@ -1,8 +1,40 @@
-# Subsystem Tracer - Implementation Complete ✅
+# Subsystem Tracer - Implementation (PARTIAL)
 
 **Feature Request**: "Is it possible for the function trace to highlight plugin interactions so we can get a clearer picture of the emulation flow? eg if we want to extract assets"
 
-**Answer**: ✅ **YES - Now Implemented!**
+**Answer**: ⚠️ **PARTIALLY IMPLEMENTED** - See critical limitation below
+
+---
+
+## 🔴 CRITICAL LIMITATION DISCOVERED
+
+**Status**: Deep code review revealed a critical architectural gap.
+
+### What Works ✅
+- **BIOS Syscall Detection**: Fully functional
+  - Detects LoadExecPS2, sceCdRead, and other BIOS calls
+  - Shows "BIOS" subsystem with syscall details
+  - Coverage: ~5% of subsystem events
+
+### What Doesn't Work ❌
+- **Memory-Based Detection**: NOT FUNCTIONAL
+  - GS/GIF register detection (graphics)
+  - DMA channel detection (asset transfers)
+  - SPU2 register detection (audio)
+  - CDVD/USB/DEV9 detection (I/O)
+  - All memory-mapped hardware access
+  - Coverage: ~95% of subsystem events
+
+### Root Cause
+The `TraceEvent.mem_r` and `mem_w` vectors (memory read/write tracking) are **never populated**. The subsystem detection logic exists and is correct, but it has no memory access data to analyze.
+
+**Impact**: The user's primary use case (**asset extraction via GIF/GS/DMA detection**) does not work.
+
+### Remediation
+See `GAP_ANALYSIS_SUBSYSTEM_TRACER.md` and `REMEDIATION_PLAN_MEMORY_TRACKING.md` for:
+- Complete gap analysis
+- Proposed fix (instruction decoder integration)
+- Implementation plan (~4 hours effort)
 
 ---
 
